@@ -1,5 +1,5 @@
 # FLDCLegacyDataMigrator
-Converts legacy MySql database dumps into stats files for importing.
+This is a console application which converts legacy MySql database dumps into stats files for importing.
 
 ## Deployment
 
