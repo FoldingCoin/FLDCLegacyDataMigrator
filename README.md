@@ -1,6 +1,11 @@
 # FLDCLegacyDataMigrator
 This is a console application which converts legacy MySql database dumps into stats files for importing.
 
+## Prerequisites
+
+* .NET Core 2.0
+* Microsoft SQL Server 2017
+
 ## Deployment
 
 ### App Hardware Requirements
