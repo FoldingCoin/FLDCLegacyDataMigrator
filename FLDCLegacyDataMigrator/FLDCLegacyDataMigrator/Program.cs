@@ -14,6 +14,7 @@
                 DependencyRegistration.Register();
                 var migrator = WindsorContainer.Instance.Resolve<IMigratorService>();
                 Environment.ExitCode = migrator.Execute(args);
+                Console.WriteLine($"({Environment.ExitCode}) - {Constants.ErrorMessages.Get(Environment.ExitCode)}");
             }
             catch (Exception e)
             {
@@ -23,6 +24,8 @@
             }
             finally
             {
+                Console.WriteLine("Press any key to exit.");
+                Console.ReadKey();
                 WindsorContainer.Dispose();
             }
         }

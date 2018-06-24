@@ -6,21 +6,28 @@
 
     public class MigratorProvider : IMigratorService
     {
+        private readonly ICommandLineArgumentsValidatorService inputValidator;
+
         private readonly ILoggingService loggingService;
 
-        public MigratorProvider(ILoggingService loggingService)
+        public MigratorProvider(ILoggingService loggingService, ICommandLineArgumentsValidatorService inputValidator)
         {
             this.loggingService = loggingService;
+            this.inputValidator = inputValidator;
         }
 
         public int Execute(string[] args)
         {
             loggingService.LogDebug("Begin Execution");
-            Console.WriteLine("Hello World!");
-            Console.WriteLine("Press any key to exit.");
-            Console.ReadKey();
+
+            var result = inputValidator.Validate(args);
+            if (result == Constants.ErrorCodes.Success)
+            {
+                Console.WriteLine("Hello World!");
+            }
+
             loggingService.LogDebug("End Execution");
-            return 0;
+            return result;
         }
     }
 }
