@@ -15,5 +15,10 @@
         {
             return File.Exists(filename);
         }
+
+        public StreamReader OpenFileStreamReader(string filename)
+        {
+            return new StreamReader(filename);
+        }
     }
 }
