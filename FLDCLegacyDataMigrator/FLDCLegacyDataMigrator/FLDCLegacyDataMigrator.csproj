@@ -6,4 +6,8 @@
     <AssemblyName>FLDCLegacyDataMigrator</AssemblyName>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Castle.Windsor" Version="4.1.0" />
+  </ItemGroup>
+
 </Project>
