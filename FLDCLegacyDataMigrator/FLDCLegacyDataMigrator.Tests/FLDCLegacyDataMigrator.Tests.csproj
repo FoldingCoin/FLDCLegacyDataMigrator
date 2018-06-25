@@ -6,12 +6,14 @@
 
   <ItemGroup>
     <None Remove="TestData\EmptyFile.sql" />
+    <None Remove="TestData\ExpectedStatsDataOutput.txt" />
     <None Remove="TestData\TestLegacyDbDump.sql" />
     <None Remove="TestData\TestLegacyDbDumpCorrupt.sql" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="TestData\EmptyFile.sql" />
+    <EmbeddedResource Include="TestData\ExpectedStatsDataOutput.txt" />
     <EmbeddedResource Include="TestData\TestLegacyDbDump.sql" />
     <EmbeddedResource Include="TestData\TestLegacyDbDumpCorrupt.sql" />
   </ItemGroup>

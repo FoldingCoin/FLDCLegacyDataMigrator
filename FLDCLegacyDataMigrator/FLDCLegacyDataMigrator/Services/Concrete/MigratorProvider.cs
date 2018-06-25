@@ -12,15 +12,19 @@
 
         private readonly ILoggingService loggingService;
 
+        private readonly IStatsDataWriterService statsDataWriter;
+
         public MigratorProvider(
             ILoggingService loggingService,
             ICommandLineArgumentsValidatorService inputValidator,
-            ILegacyDbDumpReaderService legacyDbDumpReader)
+            ILegacyDbDumpReaderService legacyDbDumpReader,
+            IStatsDataWriterService statsDataWriter)
         {
             this.loggingService = loggingService;
             this.inputValidator = inputValidator;
             this.legacyDbDumpReader = legacyDbDumpReader;
             this.legacyDbDumpReader.RecordsForDayRead += LegacyDbDumpReader_RecordsForDayRead;
+            this.statsDataWriter = statsDataWriter;
         }
 
         public int Execute(string[] args)

@@ -14,6 +14,8 @@
 
         private ILoggingService loggingServiceMock;
 
+        private IStatsDataWriterService statsDataWriterMock;
+
         private MigratorProvider systemUnderTest;
 
         private ICommandLineArgumentsValidatorService validatorMock;
@@ -81,7 +83,12 @@
             loggingServiceMock = Substitute.For<ILoggingService>();
             validatorMock = Substitute.For<ICommandLineArgumentsValidatorService>();
             legacyDbDumpReaderMock = Substitute.For<ILegacyDbDumpReaderService>();
-            systemUnderTest = new MigratorProvider(loggingServiceMock, validatorMock, legacyDbDumpReaderMock);
+            statsDataWriterMock = Substitute.For<IStatsDataWriterService>();
+            systemUnderTest = new MigratorProvider(
+                loggingServiceMock,
+                validatorMock,
+                legacyDbDumpReaderMock,
+                statsDataWriterMock);
         }
     }
 }

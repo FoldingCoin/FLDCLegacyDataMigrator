@@ -17,7 +17,8 @@
                 Component.For<IDateTimeService>().ImplementedBy<DateTimeProvider>().LifestyleSingleton(),
                 Component.For<ICommandLineArgumentsValidatorService>().ImplementedBy<CommandLineArgumentsValidatorProvider>().LifestyleTransient(),
                 Component.For<IFileSystemOperationsService>().ImplementedBy<FileSystemOperationsProvider>().LifestyleTransient(),
-                Component.For<ILegacyDbDumpReaderService>().ImplementedBy<LegacyDbDumpReaderProvider>().LifestyleTransient());                
+                Component.For<ILegacyDbDumpReaderService>().ImplementedBy<LegacyDbDumpReaderProvider>().LifestyleTransient(),
+                Component.For<IStatsDataWriterService>().ImplementedBy<StatsDataWriterProvider>().LifestyleTransient());
         }
     }
 }

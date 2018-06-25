@@ -1,8 +1,6 @@
 ﻿namespace FLDCLegacyDataMigrator.Tests
 {
     using System.Collections.Generic;
-    using System.IO;
-    using System.Reflection;
 
     using FLDCLegacyDataMigrator.Entity;
     using FLDCLegacyDataMigrator.Services.Abstract;
@@ -13,7 +11,7 @@
     using NUnit.Framework;
 
     [TestFixture]
-    public class LegacyDbDumpReaderProviderTests
+    public class LegacyDbDumpReaderProviderTests : TestsWithResourcesBase
     {
         private string corruptDataFilename;
 
@@ -152,30 +150,9 @@
         [TearDown]
         public void TearDown()
         {
-            RemvoveFile(testDataFilename);
-            RemvoveFile(emptyFileFilename);
-            RemvoveFile(corruptDataFilename);
-        }
-
-        private string ExtractTestDataFile(string resourceName)
-        {
-            using (var resourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName))
-            {
-                var tempFile = Path.GetTempFileName();
-                using (var targetStream = new FileStream(tempFile, FileMode.OpenOrCreate))
-                {
-                    resourceStream.CopyTo(targetStream);
-                    return tempFile;
-                }
-            }
-        }
-
-        private void RemvoveFile(string filename)
-        {
-            if (File.Exists(filename))
-            {
-                File.Delete(filename);
-            }
+            RemoveFile(testDataFilename);
+            RemoveFile(emptyFileFilename);
+            RemoveFile(corruptDataFilename);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿namespace FLDCLegacyDataMigrator.Services.Concrete
 {
     using System.IO;
+    using System.Text;
 
     using FLDCLegacyDataMigrator.Services.Abstract;
 
@@ -18,7 +19,12 @@
 
         public StreamReader OpenFileStreamReader(string filename)
         {
-            return new StreamReader(filename);
+            return new StreamReader(filename, Encoding.UTF8);
+        }
+
+        public StreamWriter OpenFileStreamWriter(string filename)
+        {
+            return new StreamWriter(filename, false, Encoding.UTF8);
         }
     }
 }

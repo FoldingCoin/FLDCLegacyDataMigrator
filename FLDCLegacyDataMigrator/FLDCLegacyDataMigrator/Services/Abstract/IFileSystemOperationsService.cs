@@ -9,5 +9,7 @@
         bool FileExists(string filename);
 
         StreamReader OpenFileStreamReader(string filename);
+
+        StreamWriter OpenFileStreamWriter(string filename);
     }
 }
