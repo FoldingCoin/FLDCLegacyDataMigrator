@@ -10,11 +10,38 @@
     [TestFixture]
     public class MigratorProviderTests
     {
+        private ILegacyDbDumpReaderService legacyDbDumpReaderMock;
+
         private ILoggingService loggingServiceMock;
 
         private MigratorProvider systemUnderTest;
 
         private ICommandLineArgumentsValidatorService validatorMock;
+
+        [Test]
+        public void Execute_WhenArgsValid_ReadsInputFile()
+        {
+            var args = new[] { " arg1 ", "arg2" };
+            validatorMock.Validate(args).Returns(Constants.ErrorCodes.Success);
+
+            systemUnderTest.Execute(args);
+
+            legacyDbDumpReaderMock.Received(1).ReadData("arg1");
+        }
+
+        [TestCase(Constants.ErrorCodes.Success)]
+        [TestCase(Constants.ErrorCodes.InvalidInputFileName)]
+        [TestCase(Constants.ErrorCodes.OutputDirectoryDoesNotExist)]
+        public void Execute_WhenArgsValid_ReturnsResultFromReader(int expectedCode)
+        {
+            var args = new[] { " arg1 ", "arg2" };
+            validatorMock.Validate(args).Returns(Constants.ErrorCodes.Success);
+            legacyDbDumpReaderMock.ReadData("arg1").Returns(expectedCode);
+
+            var actual = systemUnderTest.Execute(args);
+
+            Assert.That(actual, Is.EqualTo(expectedCode));
+        }
 
         [Test]
         public void Execute_WhenInvoked_LogsBeginAndEnd()
@@ -53,7 +80,8 @@
         {
             loggingServiceMock = Substitute.For<ILoggingService>();
             validatorMock = Substitute.For<ICommandLineArgumentsValidatorService>();
-            systemUnderTest = new MigratorProvider(loggingServiceMock, validatorMock);
+            legacyDbDumpReaderMock = Substitute.For<ILegacyDbDumpReaderService>();
+            systemUnderTest = new MigratorProvider(loggingServiceMock, validatorMock, legacyDbDumpReaderMock);
         }
     }
 }

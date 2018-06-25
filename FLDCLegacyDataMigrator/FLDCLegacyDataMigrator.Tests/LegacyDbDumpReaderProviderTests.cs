@@ -15,11 +15,34 @@
     [TestFixture]
     public class LegacyDbDumpReaderProviderTests
     {
+        private string corruptDataFilename;
+
+        private string emptyFileFilename;
+
         private ILoggingService loggingServiceMock;
 
         private LegacyDbDumpReaderProvider systemUnderTest;
 
         private string testDataFilename;
+
+        [Test]
+        public void ReadData_WhenInvokedOnCorruptFile_FiresWarnings()
+        {
+            systemUnderTest.ReadData(corruptDataFilename);
+
+            loggingServiceMock.Received(1)
+                .LogWarning("Row could not be parsed: (3, 'FatHom', 'ALL', '1NSvYD7W2AT7hKdja3BQ),");
+            loggingServiceMock.Received(1).LogWarning(
+                "Row could not be parsed: (17, 'TSC!TeamServer', 'FLDC', '1P8bne5rA11dEvX2xuN9tdXdcDHU2j4Xpw'),");
+        }
+
+        [Test]
+        public void ReadData_WhenInvokedOnEmptyFile_ReturnsCorrectErrorCode()
+        {
+            var actual = systemUnderTest.ReadData(emptyFileFilename);
+
+            Assert.That(actual, Is.EqualTo(Constants.ErrorCodes.EmptyInputFile));
+        }
 
         [Test]
         public void ReadData_WhenInvokedOnValidFile_BatchEventFiresForEachDay()
@@ -120,28 +143,38 @@
             var fileSystemOperations = new FileSystemOperationsProvider();
             loggingServiceMock = Substitute.For<ILoggingService>();
             systemUnderTest = new LegacyDbDumpReaderProvider(fileSystemOperations, loggingServiceMock);
-            ExtractTestDataFile();
+            testDataFilename = ExtractTestDataFile("FLDCLegacyDataMigrator.Tests.TestData.TestLegacyDbDump.sql");
+            emptyFileFilename = ExtractTestDataFile("FLDCLegacyDataMigrator.Tests.TestData.EmptyFile.sql");
+            corruptDataFilename =
+                ExtractTestDataFile("FLDCLegacyDataMigrator.Tests.TestData.TestLegacyDbDumpCorrupt.sql");
         }
 
         [TearDown]
         public void TearDown()
         {
-            if (File.Exists(testDataFilename))
+            RemvoveFile(testDataFilename);
+            RemvoveFile(emptyFileFilename);
+            RemvoveFile(corruptDataFilename);
+        }
+
+        private string ExtractTestDataFile(string resourceName)
+        {
+            using (var resourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName))
             {
-                File.Delete(testDataFilename);
+                var tempFile = Path.GetTempFileName();
+                using (var targetStream = new FileStream(tempFile, FileMode.OpenOrCreate))
+                {
+                    resourceStream.CopyTo(targetStream);
+                    return tempFile;
+                }
             }
         }
 
-        private void ExtractTestDataFile()
+        private void RemvoveFile(string filename)
         {
-            using (var resourceStream = Assembly.GetExecutingAssembly()
-                .GetManifestResourceStream("FLDCLegacyDataMigrator.Tests.TestData.TestLegacyDbDump.sql"))
+            if (File.Exists(filename))
             {
-                testDataFilename = Path.GetTempFileName();
-                using (var targetStream = new FileStream(testDataFilename, FileMode.OpenOrCreate))
-                {
-                    resourceStream.CopyTo(targetStream);
-                }
+                File.Delete(filename);
             }
         }
     }

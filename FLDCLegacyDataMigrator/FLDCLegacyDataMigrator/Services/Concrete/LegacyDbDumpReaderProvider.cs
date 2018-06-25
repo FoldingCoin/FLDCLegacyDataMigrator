@@ -13,7 +13,11 @@
 
         private readonly ILoggingService loggingService;
 
-        public LegacyDbDumpReaderProvider(IFileSystemOperationsService fileSystemOperations, ILoggingService loggingService)
+        private bool eventFired;
+
+        public LegacyDbDumpReaderProvider(
+            IFileSystemOperationsService fileSystemOperations,
+            ILoggingService loggingService)
         {
             this.fileSystemOperations = fileSystemOperations;
             this.loggingService = loggingService;
@@ -23,6 +27,7 @@
 
         public int ReadData(string filename)
         {
+            eventFired = false;
             using (var reader = fileSystemOperations.OpenFileStreamReader(filename))
             {
                 DateTime? currentTableDate = null;
@@ -34,47 +39,35 @@
                     {
                         if (IsCreateTableStatement(line))
                         {
-                            var tableDate = TryGetTableDate(line);
-                            if (tableDate != null)
-                            {
-                                if (currentTableDate != null && (tableDate.Value - currentTableDate.Value).Days != 0)
-                                {
-                                    if (recordsForDay.Any())
-                                    {
-                                        RecordsForDayRead?.Invoke(
-                                            this,
-                                            new RecordsForDayReadEventArgs(new List<LegacyDataItem>(recordsForDay)));
-                                    }
-
-                                    recordsForDay.Clear();
-                                }
-
-                                currentTableDate = tableDate;
-                            }
+                            currentTableDate = ProcessCreateTable(line, currentTableDate, recordsForDay);
                         }
                         else if (IsInsertRow(line))
                         {
-                            if (currentTableDate.HasValue)
-                            {
-                                LegacyDataItem readItem = TryGetRow(line, currentTableDate.Value);
-                                if (readItem != null)
-                                {
-                                    recordsForDay.Add(readItem);
-                                }
-                            }
+                            ProcessRowInsert(currentTableDate, line, recordsForDay);
                         }
                     }
                 }
 
-                if (recordsForDay.Any())
-                {
-                    RecordsForDayRead?.Invoke(
-                        this,
-                        new RecordsForDayReadEventArgs(new List<LegacyDataItem>(recordsForDay)));
-                }
+                FireEventForDay(recordsForDay);
             }
 
-            return Constants.ErrorCodes.Success;
+            if (eventFired)
+            {
+                return Constants.ErrorCodes.Success;
+            }
+
+            return Constants.ErrorCodes.EmptyInputFile;
+        }
+
+        private void FireEventForDay(List<LegacyDataItem> recordsForDay)
+        {
+            if (recordsForDay.Any())
+            {
+                RecordsForDayRead?.Invoke(
+                    this,
+                    new RecordsForDayReadEventArgs(new List<LegacyDataItem>(recordsForDay)));
+                eventFired = true;
+            }
         }
 
         private bool IsCreateTableStatement(string line)
@@ -87,12 +80,50 @@
             return line.StartsWith("(") && (line.EndsWith("),") || line.EndsWith(");"));
         }
 
+        private DateTime? ProcessCreateTable(
+            string line,
+            DateTime? currentTableDate,
+            List<LegacyDataItem> recordsForDay)
+        {
+            var tableDate = TryGetTableDate(line);
+            if (tableDate != null)
+            {
+                if (currentTableDate != null && (tableDate.Value - currentTableDate.Value).Days != 0)
+                {
+                    FireEventForDay(recordsForDay);
+                    recordsForDay.Clear();
+                }
+
+                currentTableDate = tableDate;
+            }
+
+            return currentTableDate;
+        }
+
+        private void ProcessRowInsert(DateTime? currentTableDate, string line, List<LegacyDataItem> recordsForDay)
+        {
+            if (currentTableDate.HasValue)
+            {
+                LegacyDataItem readItem = TryGetRow(line, currentTableDate.Value);
+                if (readItem != null)
+                {
+                    recordsForDay.Add(readItem);
+                }
+            }
+        }
+
+        private string[] SplitLineForDataRow(string line)
+        {
+            var parts = line.Replace("(", string.Empty).Replace(")", string.Empty).Replace("'", string.Empty)
+                .Replace(";", string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries);
+            return parts;
+        }
+
         private LegacyDataItem TryGetRow(string line, DateTime date)
         {
             try
             {
-                var parts = line.Replace("(", string.Empty).Replace(")", string.Empty).Replace("'", string.Empty)
-                    .Replace(";", string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries);
+                var parts = SplitLineForDataRow(line);
                 var result = new LegacyDataItem();
                 result.Id = long.Parse(parts[0].Trim());
                 result.Name = parts[1].Trim();

@@ -1,6 +1,6 @@
 ﻿namespace FLDCLegacyDataMigrator.Services.Concrete
 {
-    using System;
+    using System.Linq;
 
     using FLDCLegacyDataMigrator.Services.Abstract;
 
@@ -8,12 +8,19 @@
     {
         private readonly ICommandLineArgumentsValidatorService inputValidator;
 
+        private readonly ILegacyDbDumpReaderService legacyDbDumpReader;
+
         private readonly ILoggingService loggingService;
 
-        public MigratorProvider(ILoggingService loggingService, ICommandLineArgumentsValidatorService inputValidator)
+        public MigratorProvider(
+            ILoggingService loggingService,
+            ICommandLineArgumentsValidatorService inputValidator,
+            ILegacyDbDumpReaderService legacyDbDumpReader)
         {
             this.loggingService = loggingService;
             this.inputValidator = inputValidator;
+            this.legacyDbDumpReader = legacyDbDumpReader;
+            this.legacyDbDumpReader.RecordsForDayRead += LegacyDbDumpReader_RecordsForDayRead;
         }
 
         public int Execute(string[] args)
@@ -23,11 +30,17 @@
             var result = inputValidator.Validate(args);
             if (result == Constants.ErrorCodes.Success)
             {
-                Console.WriteLine("Hello World!");
+                result = legacyDbDumpReader.ReadData(args[0].Trim());
             }
 
             loggingService.LogDebug("End Execution");
             return result;
+        }
+
+        private void LegacyDbDumpReader_RecordsForDayRead(object sender, RecordsForDayReadEventArgs e)
+        {
+            loggingService.LogDebug($"Batch Read: {e.Records.First().Date} - {e.Records.Count()} record(s)");
+            // TODO: Write out the records in stats file format
         }
     }
 }

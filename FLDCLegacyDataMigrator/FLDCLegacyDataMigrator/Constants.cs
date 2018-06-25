@@ -15,6 +15,8 @@
             public const int InvalidOutputDirectoryName = 4;
 
             public const int OutputDirectoryDoesNotExist = 5;
+
+            public const int EmptyInputFile = 6;
         }
 
         public static class ErrorMessages
@@ -35,6 +37,8 @@
                         return "The specified output directory name is invalid.";
                     case ErrorCodes.OutputDirectoryDoesNotExist:
                         return "The specified output directory does not exist.";
+                    case ErrorCodes.EmptyInputFile:
+                        return "The specified input does not contain any records.";
                     default:
                         return "Unknown error.";
                 }
