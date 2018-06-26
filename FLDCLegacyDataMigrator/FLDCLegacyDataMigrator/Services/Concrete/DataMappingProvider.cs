@@ -9,7 +9,14 @@
     {
         public IEnumerable<StatsDataItem> MapData(IEnumerable<LegacyDataItem> legacyData)
         {
-            throw new System.NotImplementedException();
+            foreach (var legacyItem in legacyData)
+            {
+                yield return new StatsDataItem
+                                 {
+                                     Name = $"{legacyItem.Name}_{legacyItem.Token}_{legacyItem.Address}",
+                                     NewCredit = legacyItem.TotalPoints, SumTotal = 0, Team = 0
+                                 };
+            }
         }
     }
 }

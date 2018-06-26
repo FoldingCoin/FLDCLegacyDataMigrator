@@ -10,6 +10,8 @@
     [TestFixture]
     public class MigratorProviderTests
     {
+        private IDataMappingService dataMappingServiceMock;
+
         private ILegacyDbDumpReaderService legacyDbDumpReaderMock;
 
         private ILoggingService loggingServiceMock;
@@ -83,11 +85,13 @@
             loggingServiceMock = Substitute.For<ILoggingService>();
             validatorMock = Substitute.For<ICommandLineArgumentsValidatorService>();
             legacyDbDumpReaderMock = Substitute.For<ILegacyDbDumpReaderService>();
+            dataMappingServiceMock = Substitute.For<IDataMappingService>();
             statsDataWriterMock = Substitute.For<IStatsDataWriterService>();
             systemUnderTest = new MigratorProvider(
                 loggingServiceMock,
                 validatorMock,
                 legacyDbDumpReaderMock,
+                dataMappingServiceMock,
                 statsDataWriterMock);
         }
     }
