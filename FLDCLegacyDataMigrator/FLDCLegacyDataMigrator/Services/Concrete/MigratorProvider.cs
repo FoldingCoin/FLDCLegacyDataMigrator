@@ -8,6 +8,10 @@
     {
         private readonly IDataMappingService dataMappingService;
 
+        private readonly IFileCompressionService fileCompressionService;
+
+        private readonly IFileSystemOperationsService fileSystemOperationsService;
+
         private readonly ICommandLineArgumentsValidatorService inputValidator;
 
         private readonly ILegacyDbDumpReaderService legacyDbDumpReader;
@@ -21,14 +25,18 @@
             ICommandLineArgumentsValidatorService inputValidator,
             ILegacyDbDumpReaderService legacyDbDumpReader,
             IDataMappingService dataMappingService,
-            IStatsDataWriterService statsDataWriter)
+            IFileSystemOperationsService fileSystemOperationsService,
+            IStatsDataWriterService statsDataWriter,
+            IFileCompressionService fileCompressionService)
         {
             this.loggingService = loggingService;
             this.inputValidator = inputValidator;
             this.legacyDbDumpReader = legacyDbDumpReader;
             this.legacyDbDumpReader.RecordsForDayRead += LegacyDbDumpReader_RecordsForDayRead;
             this.dataMappingService = dataMappingService;
+            this.fileSystemOperationsService = fileSystemOperationsService;
             this.statsDataWriter = statsDataWriter;
+            this.fileCompressionService = fileCompressionService;
         }
 
         public int Execute(string[] args)

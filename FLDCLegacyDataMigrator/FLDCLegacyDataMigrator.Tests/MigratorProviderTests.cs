@@ -12,6 +12,10 @@
     {
         private IDataMappingService dataMappingServiceMock;
 
+        private IFileCompressionService fileCompressionServiceMock;
+
+        private IFileSystemOperationsService fileSystemOperationsServiceMock;
+
         private ILegacyDbDumpReaderService legacyDbDumpReaderMock;
 
         private ILoggingService loggingServiceMock;
@@ -86,13 +90,17 @@
             validatorMock = Substitute.For<ICommandLineArgumentsValidatorService>();
             legacyDbDumpReaderMock = Substitute.For<ILegacyDbDumpReaderService>();
             dataMappingServiceMock = Substitute.For<IDataMappingService>();
+            fileSystemOperationsServiceMock = Substitute.For<IFileSystemOperationsService>();
             statsDataWriterMock = Substitute.For<IStatsDataWriterService>();
+            fileCompressionServiceMock = Substitute.For<IFileCompressionService>();
             systemUnderTest = new MigratorProvider(
                 loggingServiceMock,
                 validatorMock,
                 legacyDbDumpReaderMock,
                 dataMappingServiceMock,
-                statsDataWriterMock);
+                fileSystemOperationsServiceMock,
+                statsDataWriterMock,
+                fileCompressionServiceMock);
         }
     }
 }
