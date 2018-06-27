@@ -8,12 +8,14 @@
 
     public class BZip2FileCompressionProvider : IFileCompressionService
     {
+        public string FileExt => ".bz2";
+
         public void CompressFile(string sourceFilename, string compressedFilename)
         {
             using (var sourceStream = new FileStream(sourceFilename, FileMode.Open))
             {
                 using (var compressedStream = new FileStream(compressedFilename, FileMode.OpenOrCreate))
-                {
+                {                  
                     BZip2.Compress(sourceStream, compressedStream, false, 5);
                 }
             }

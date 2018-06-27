@@ -2,6 +2,8 @@
 {
     public interface IFileCompressionService
     {
+        string FileExt { get; }
+
         void CompressFile(string sourceFilename, string compressedFilename);
     }
 }

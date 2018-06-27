@@ -7,6 +7,11 @@
 
     public class FileSystemOperationsProvider : IFileSystemOperationsService
     {
+        public void DeleteFile(string filename)
+        {
+            File.Delete(filename);
+        }
+
         public bool DirectoryExists(string path)
         {
             return Directory.Exists(path);
@@ -15,6 +20,21 @@
         public bool FileExists(string filename)
         {
             return File.Exists(filename);
+        }
+
+        public string GetTempFilename()
+        {
+            return Path.GetTempFileName();
+        }
+
+        public string GetTempPath()
+        {
+            return Path.GetTempPath();
+        }
+
+        public void MoveFile(string from, string to)
+        {
+            File.Move(from, to);
         }
 
         public StreamReader OpenFileStreamReader(string filename)

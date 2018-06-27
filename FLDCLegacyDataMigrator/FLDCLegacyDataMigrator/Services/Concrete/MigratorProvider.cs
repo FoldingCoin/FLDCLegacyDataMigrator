@@ -1,5 +1,6 @@
 ﻿namespace FLDCLegacyDataMigrator.Services.Concrete
 {
+    using System.IO;
     using System.Linq;
 
     using FLDCLegacyDataMigrator.Services.Abstract;
@@ -19,6 +20,8 @@
         private readonly ILoggingService loggingService;
 
         private readonly IStatsDataWriterService statsDataWriter;
+
+        private string outputPath;
 
         public MigratorProvider(
             ILoggingService loggingService,
@@ -46,6 +49,7 @@
             var result = inputValidator.Validate(args);
             if (result == Constants.ErrorCodes.Success)
             {
+                outputPath = args[1].Trim();
                 result = legacyDbDumpReader.ReadData(args[0].Trim());
             }
 
@@ -56,11 +60,44 @@
         private void LegacyDbDumpReader_RecordsForDayRead(object sender, RecordsForDayReadEventArgs e)
         {
             loggingService.LogDebug($"Batch Read: {e.Records.First().Date} - {e.Records.Count()} record(s)");
-            // TODO: Write out the records in stats file format
-            // 1. Calculate filename, based on source date
-            // 2. Map data
-            // 3. Write to stats format
-            // 4. Zip the file
+
+            // Map the data
+            var statsData = dataMappingService.MapData(e.Records);
+
+            // Build filenames
+            var filename = $"FoldingStatsData-{e.Records.First().Date.ToString("yyyyMMdd")}.txt";
+            var path = fileSystemOperationsService.GetTempPath();
+            var fullPath = Path.Combine(path, filename);            
+            var targetPath = Path.Combine(outputPath, filename + fileCompressionService.FileExt);
+
+            // Remove intermediate file, if it already exists
+            DeleteFileIfExists(fullPath);
+
+            // Write the data in stats file format
+            statsDataWriter.Write(statsData, e.Records.First().Date, fullPath);
+
+            try
+            {
+                // Compress the stats file
+                var tempFile = fileSystemOperationsService.GetTempFilename();
+                fileCompressionService.CompressFile(fullPath, tempFile);
+
+                // Move to output folder
+                fileSystemOperationsService.MoveFile(tempFile, targetPath);
+            }
+            finally
+            {
+                // Cleanup
+                DeleteFileIfExists(fullPath);
+            }
+        }
+
+        private void DeleteFileIfExists(string fullPath)
+        {
+            if (fileSystemOperationsService.FileExists(fullPath))
+            {
+                fileSystemOperationsService.DeleteFile(fullPath);
+            }
         }
     }
 }

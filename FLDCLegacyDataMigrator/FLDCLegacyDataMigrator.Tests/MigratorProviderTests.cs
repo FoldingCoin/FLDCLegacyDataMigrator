@@ -1,5 +1,10 @@
 ﻿namespace FLDCLegacyDataMigrator.Tests
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+
+    using FLDCLegacyDataMigrator.Entity;
     using FLDCLegacyDataMigrator.Services.Abstract;
     using FLDCLegacyDataMigrator.Services.Concrete;
 
@@ -83,6 +88,82 @@
             validatorMock.Received(1).Validate(args);
         }
 
+        [Test]
+        public void Execute_WhenLegacyReaderRecordsForDayReadFires_CompressesStatsFiles()
+        {
+            var outputRecords = new List<StatsDataItem>();
+            outputRecords.Add(new StatsDataItem());
+            var inputRecords = SetUpLegacyDataReader();
+            dataMappingServiceMock.MapData(inputRecords).Returns(outputRecords);
+            var outputFilename = SetUpStatsFileIntermediateOutputFilename(inputRecords);
+            var tempCompressedFilename = @"c:\path\to\tmp\tmpfile.tmp";
+            fileSystemOperationsServiceMock.GetTempFilename().Returns(tempCompressedFilename);
+
+            systemUnderTest.Execute(new[] { "arg1", "arg2" });
+
+            fileCompressionServiceMock.Received(1).CompressFile(outputFilename, tempCompressedFilename);
+        }
+
+        [Test]
+        public void Execute_WhenLegacyReaderRecordsForDayReadFires_MapsRecords()
+        {
+            var inputRecords = SetUpLegacyDataReader();
+
+            systemUnderTest.Execute(new[] { "arg1", "arg2" });
+
+            dataMappingServiceMock.Received(1).MapData(inputRecords);
+        }
+
+        [Test]
+        public void Execute_WhenLegacyReaderRecordsForDayReadFires_MovesCompressedFileToOutputFolder()
+        {
+            var outputRecords = new List<StatsDataItem>();
+            outputRecords.Add(new StatsDataItem());
+            var inputRecords = SetUpLegacyDataReader();
+            dataMappingServiceMock.MapData(inputRecords).Returns(outputRecords);
+            SetUpStatsFileIntermediateOutputFilename(inputRecords);
+            var tempCompressedFilename = @"c:\path\to\tmp\tmpfile.tmp";
+            fileSystemOperationsServiceMock.GetTempFilename().Returns(tempCompressedFilename);
+            fileCompressionServiceMock.FileExt.Returns(".bz2");
+            var outputFilename =
+                $"c:\\path\\to\\output\\FoldingStatsData-{inputRecords.First().Date.ToString("yyyyMMdd")}.txt.bz2";
+
+            systemUnderTest.Execute(new[] { "arg1", @"c:\path\to\output" });
+
+            fileSystemOperationsServiceMock.Received(1).MoveFile(tempCompressedFilename, outputFilename);
+        }
+
+        [Test]
+        public void Execute_WhenLegacyReaderRecordsForDayReadFires_RemovesTempFile()
+        {
+            var outputRecords = new List<StatsDataItem>();
+            outputRecords.Add(new StatsDataItem());
+            var inputRecords = SetUpLegacyDataReader();
+            dataMappingServiceMock.MapData(inputRecords).Returns(outputRecords);
+            var intermediateOutputFilename = SetUpStatsFileIntermediateOutputFilename(inputRecords);
+            var tempCompressedFilename = @"c:\path\to\tmp\tmpfile.tmp";
+            fileSystemOperationsServiceMock.GetTempFilename().Returns(tempCompressedFilename);
+            fileSystemOperationsServiceMock.FileExists(intermediateOutputFilename).Returns(true);
+
+            systemUnderTest.Execute(new[] { "arg1", @"c:\path\to\output" });
+
+            fileSystemOperationsServiceMock.Received(1).DeleteFile(intermediateOutputFilename);
+        }
+
+        [Test]
+        public void Execute_WhenLegacyReaderRecordsForDayReadFires_WritesStatsFiles()
+        {
+            var outputRecords = new List<StatsDataItem>();
+            outputRecords.Add(new StatsDataItem());
+            var inputRecords = SetUpLegacyDataReader();
+            dataMappingServiceMock.MapData(inputRecords).Returns(outputRecords);
+            var outputFilename = SetUpStatsFileIntermediateOutputFilename(inputRecords);
+
+            systemUnderTest.Execute(new[] { "arg1", "arg2" });
+
+            statsDataWriterMock.Received(1).Write(outputRecords, inputRecords.First().Date, outputFilename);
+        }
+
         [SetUp]
         public void SetUp()
         {
@@ -101,6 +182,26 @@
                 fileSystemOperationsServiceMock,
                 statsDataWriterMock,
                 fileCompressionServiceMock);
+        }
+
+        private IEnumerable<LegacyDataItem> SetUpLegacyDataReader()
+        {
+            var inputRecords = new List<LegacyDataItem>();
+            inputRecords.Add(new LegacyDataItem { Date = new DateTime(2001, 9, 11) });
+            legacyDbDumpReaderMock.WhenForAnyArgs(x => x.ReadData("arg1")).Do(
+                x =>
+                    {
+                        legacyDbDumpReaderMock.RecordsForDayRead +=
+                            Raise.EventWith(new RecordsForDayReadEventArgs(inputRecords));
+                    });
+            return inputRecords;
+        }
+
+        private string SetUpStatsFileIntermediateOutputFilename(IEnumerable<LegacyDataItem> inputRecords)
+        {
+            var tempDir = @"c:\path\to\tmp";
+            fileSystemOperationsServiceMock.GetTempPath().Returns(tempDir);
+            return $"{tempDir}\\FoldingStatsData-{inputRecords.First().Date.ToString("yyyyMMdd")}.txt";
         }
     }
 }
